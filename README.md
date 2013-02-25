@@ -13,12 +13,13 @@ This is the raw, unedited version of the app built over the period of the hackat
 
 yTunes is a minimal music service web app, in the same spirit of Spotify and Rdio.
 You can listen to, curate, and share your favourite music instantly without hassle.
-Try it out [here](http://leventhan.github.com/yTunes).
+Try it out [here](http://leventhan.github.com/yTunes). (Somewhat buggy due to Youtube embed restrictions.)
 [Presentation slides link.](https://docs.google.com/presentation/d/1F3IIA6KrfRyYsowzsbBO_6YxG4iIvndQ_8pN6T56YZE/edit?usp=sharing)
 
 
 Post-hackathon thoughts/things learned:
 - A hackathons is a poor environment to learn new technologies i.e. Backbone for the first time
+- if you're using an API that is still experimental/under development, you're gonna have a bad time
 - Hackathons are great to practice using semi-familiar technologies on a real product/demo
 - You're not building a web service, you're not building a prototype of a web service, you're building a *demo* of a web service
 - The demo is a critical component: Rehearse, rehearse, rehearse
