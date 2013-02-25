@@ -1,7 +1,8 @@
 yTunes | All the songs you want, powered by the Youtube API
+======
 
 Built for Hack n Roll 2013 @ NUS COM1 Basement in less than 24 hours.
-======
+
 
 yTunes is a minimal music service web app, in the same spirit of Spotify and Rdio.
 You can listen to, curate, and share your favourite music instantly without hassle.
