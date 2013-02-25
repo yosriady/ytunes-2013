@@ -1,0 +1,507 @@
+<html>
+  <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+
+        <link rel="stylesheet" href="css/normalize.min.css">
+        <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="ytunes.css">
+
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js">
+        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Chewy' rel='stylesheet' type='text/css'>
+
+
+
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript">
+      google.load("swfobject", "2.1");
+    </script>
+    <script>
+
+    // Demo search order: Caravan Palace x2, Macklemore x2, Dumb Ways to Die
+
+
+
+
+
+    /*
+       * Global Variables
+    */
+
+    var videoIdList = [];
+    var currentVideoIndex; //is adjusted at loadVideo(VideoID)
+    var currentState = -1;
+
+    var playedList = [];
+
+
+
+    /*
+       * Youtube Data API: Helper functions
+    */
+
+
+      function getVideoTitle(videoId){
+        for(i = 0;i<videoIdList.length;i++){
+          if(videoIdList[i].key === videoId){
+            return videoIdList[i].value; 
+          }
+        }
+        return "Not found";
+      }
+
+      function getVideoThumb(videoId){
+        for(i = 0;i<videoIdList.length;i++){
+          if(videoIdList[i].key === videoId){
+            return videoIdList[i].thumb; 
+          }
+        }
+        return "Not found";
+      }
+
+      function getVideoIndex(videoId){
+        for(i = 0;i<videoIdList.length;i++){
+          if(videoIdList[i].key === videoId){
+            return i;
+          }
+        }
+        return "Not found";
+      }
+
+      function contains(videoId){
+        for(i = 0;i<videoIdList.length;i++){
+          if(videoIdList[i].key === videoId){
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function played(videoID){
+
+        if(played.length===0){
+          return true;
+        }
+
+
+        for(i = 0;i<played.length;i++){
+          if(played[i] === videoID){
+            return true;
+          }
+        }
+        return false;
+      }
+
+
+
+    /*
+       * Youtube Data API: Core functions
+    */
+
+      //Overloaded: 1 arg for normal, 3 for handling imports
+      //Creates a new div for a new item and appends it to results div
+      function addSong(responseObj,t,u) {
+
+
+        if(arguments.length == 3){
+          var videoId = responseObj;
+          var title = t;
+          var thumbUrl = u;
+
+          var results = document.getElementById('results');
+
+          var songItem = document.createElement('li');
+          var songDiv = document.createElement('div');  
+          songDiv.className = "song";
+
+          songDiv.appendChild(document.createTextNode(title));
+          videoIdList.push({key : videoId, value: title, thumb: thumbUrl});
+          songDiv.id = videoId;
+
+          //lets users click and play
+          songDiv.setAttribute('onclick',"loadVideo(this.id);");
+
+
+          songItem.appendChild(songDiv);
+          results.appendChild(songItem);
+
+        } else {
+
+          var title = responseObj.snippet.title;
+          var videoId = responseObj.id.videoId;
+          var thumbUrl = responseObj.snippet.thumbnails.high.url;
+
+          var results = document.getElementById('results');
+
+          var songItem = document.createElement('li');
+          var songDiv = document.createElement('div');  
+          songDiv.className = "song";
+
+          songDiv.appendChild(document.createTextNode(title));
+          videoIdList.push({key : videoId, value: title, thumb: thumbUrl});
+          songDiv.id = videoId;
+
+          //lets users click and play
+          songDiv.setAttribute('onclick',"loadVideo(this.id);");
+
+
+          songItem.appendChild(songDiv);
+          results.appendChild(songItem);
+
+
+        }
+
+      }
+
+      //This function loads the api and search
+      function search() {
+        gapi.client.setApiKey('AIzaSyDVrvC4JWo_sVTDGX5HlMqY1E3B-lWzsdc');
+        gapi.client.load('youtube','v3',function(){
+          var q = $('#query').val();
+          var request = gapi.client.youtube.search.list({
+            q: q,
+            part : 'snippet',
+            maxResults : 10,
+            regionCode: 'SG',
+            categoryId: '10',
+            //videoEmbeddable: true, //doesnt work, need to make own
+          })
+
+
+
+
+
+
+          request.execute(function(response) {
+            //RESPONSE IS AN ARRAY!
+            //alert(JSON.stringify(response.result.items[0]));
+            for(i=0;i<100;i++){
+              //if the song is not yet in our queue
+
+              if(response.result.items[i].id.videoId===undefined){
+                console.log("videoId is undefined, skipping song");
+                continue;
+              }
+
+              if(response.result.items[i].id.videoId!==undefined && !contains(response.result.items[i])){
+                addSong(response.result.items[i]);
+                break;
+              }
+            }
+          });
+        });
+      };
+
+
+      /*
+       * Youtube Player API: Helper/small functions
+       */
+
+      // Update a particular HTML element with a new value
+      function updateHTML(elmId, value) {
+        document.getElementById(elmId).innerHTML = value;
+      }
+
+
+      // This function is called when the ytplayer changes state
+      function onPlayerStateChange(newState) {
+        currentState = newState;
+        updateHTML("playerState", newState);
+      }
+
+
+      function countChildElements(parent, child)
+     {
+          var parent = document.getElementById(parent);
+          var childCount = parent.getElementsByTagName(child).length;
+          return childCount;
+     }
+
+
+     // Allow the user to set the volume from 0-100, uses range input right now
+      function setVideoVolume() {
+        var volume = parseInt(document.getElementById("volumeSetting").value);
+        if(isNaN(volume) || volume < 0 || volume > 100) {
+          alert("Please enter a valid volume between 0 and 100.");
+        }
+        else if(ytplayer){
+          ytplayer.setVolume(volume);
+        }
+      }
+
+
+      /*
+       * Youtube Player API: Core functions
+       */      
+
+
+      // This function is called when an error is thrown by the player
+      function onPlayerError(errorCode) {
+        //150: Embed restrictions
+        //2: Unknown parameter errorsc
+
+        console.log("An error occured of type:" + errorCode +", deleting last added element.");
+        var songPlaylist = document.getElementById("results");
+
+
+        //delete the child with index currentVideoIndex,
+        // if it is causing errors
+
+        console.log("Deleting: " + videoIdList[currentVideoIndex].value);
+        console.log(songPlaylist.getElementsByTagName("li")[0].key)
+        songPlaylist.removeChild(songPlaylist.getElementsByTagName("li")[currentVideoIndex]);
+        currentVideoIndex = videoIdList.length-1;
+
+
+
+        //ATTENTION ATTENTION ATTENTION
+        // WHAT TO DO NEXT: CHECK IF VIDEOID OF A VIDEO IS UNDEFINED,
+        // DON'T ADD IT SINCE THAT MEANS WE CAN'T EMBED THOSE VIDEOS
+
+
+
+      }
+      
+      function playVideo() {
+        if (ytplayer) {
+          ytplayer.playVideo();
+          
+          if(document.getElementById("currentThumb") !== null){
+            document.getElementById("currentThumb").id = "currentThumbActive";
+          }
+
+        }
+      }
+      
+      function pauseVideo() {
+        if (ytplayer) {
+          ytplayer.pauseVideo();
+
+          if(document.getElementById("currentThumbActive") !== null){
+            document.getElementById("currentThumbActive").id = "currentThumb";
+          }
+        }
+      }
+
+      // Display information about the current state of the ytplayer, every 100ms
+      function updatePlayerInfo() {
+
+        if(ytplayer && ytplayer.getDuration) {
+
+          document.getElementById("timeBar").value = ytPlayer.getCurrentTime();
+          document.getElementById("timeBar").max = ytPlayer.getDuration();
+          updateHTML("videoDuration", Math.round(ytplayer.getDuration()));
+          updateHTML("videoCurrentTime", Math.round(ytplayer.getCurrentTime()));
+
+          //if the current song has stopped
+          if(currentState === 1 && ytplayer.getCurrentTime()===ytplayer.getDuration() && videoIdList.length>1){
+            //first we get current index of the current video
+            //then we check if index+1< videoIdList.length 
+            // if true, that means there is another item below in the queue
+
+            if(currentVideoIndex+1 < countChildElements("results","li")){
+            //then we load the videoId of the next song item
+              loadVideo(videoIdList[currentVideoIndex+1]);
+            } else {
+              //otherwise, load the first song item
+              console.log("Reached end of playlist")
+            }
+          }
+        }
+      }
+
+
+    
+      // This function is automatically called by the player once it loads
+      function onYouTubePlayerReady(playerId) {
+        ytplayer = document.getElementById("ytPlayer");
+        ytPlayer.width=0;
+        // This causes the updatePlayerInfo function to be called every 250ms to
+        // get fresh data from the player
+        setInterval(updatePlayerInfo, 100);
+        updatePlayerInfo();
+        ytplayer.addEventListener("onStateChange", "onPlayerStateChange");
+        ytplayer.addEventListener("onError", "onPlayerError");
+        //Load an initial video into the player
+
+        ytplayer.cueVideoById("ylLzyHk54Z0");
+      }
+      
+      function loadPlayer() {
+        // Lets Flash from another domain call JavaScript
+        var params = { allowScriptAccess: "always" };
+        // The element id of the Flash embed
+        var atts = { id: "ytPlayer" };
+        // All of the magic handled by SWFObject (http://code.google.com/p/swfobject/)
+        swfobject.embedSWF("http://www.youtube.com/apiplayer?" +
+                           "version=3&enablejsapi=1&playerapiid=player1", 
+                           "videoDiv", "480", "295", "9", null, null, params, atts);
+      }
+
+
+      //loads and plays and spins the cd
+      function loadVideo(videoID) {
+        if(ytplayer) {
+        ytplayer.loadVideoById(videoID);
+
+
+        if(!played(videoID)){
+          playedList.push(videoID)
+        }
+
+
+        currentVideoIndex = getVideoIndex(videoID);
+        updateHTML('current','Playing: ' + getVideoTitle(videoID));
+
+        if(document.getElementById("currentThumbActive") !== null){
+          document.getElementById("currentThumbActive").src = getVideoThumb(videoID);
+        }
+
+        if(document.getElementById("currentThumb") !== null){
+          document.getElementById("currentThumb").src = getVideoThumb(videoID);
+        }
+        playVideo();
+
+        }
+      }
+
+
+
+
+
+      function _run() {
+        loadPlayer();
+      }
+      google.setOnLoadCallback(_run);
+
+
+
+
+      function exportPlaylist(){
+        //need to iterate all the <li> elements in #results, putting their ids
+        //in an array or string (if string, we can split based on commas)
+        
+        var result = "";
+
+        //played is an array of videoIDs
+        for(i = 0; i<playedList.length;i++){
+
+
+          result += "[" + playedList[i] + "," + getVideoTitle(playedList[i]).replace(/\"/g,'\'') + "," + getVideoThumb(playedList[i]) + "]";
+          console.log(result);
+
+          result += ";"
+
+        }
+
+        alert(result); 
+
+      }
+
+      function importPlaylist(){//a string of videoIds separated by Commas
+
+        //Each item in export string = [videoId,title,thumbUrl]
+        // = [videoId, getVideoTitle(videoId), getVideoThumb(videoId)]
+
+        var playlist = prompt("Enter import string: ");
+        
+        //array of strings, need to convert to array of arrays
+        var stringArray = playlist.split(';');
+        console.log("len: " + stringArray.length);
+        console.log(stringArray[0]);
+
+        var arrayArray = [];
+
+        for(i = 0; i<stringArray.length; i++){
+          arrayArray.push(eval(stringArray[i]));
+        }
+
+        
+        //add all items in the array one by one
+        for(i = 0; i<arrayArray.length;i++){
+          //videoId, title, thumbUrl
+          addSong(arrayArray[i][0],arrayArray[i][1],arrayArray[i][2]);
+        }
+
+        // }
+      }
+
+
+
+    </script>
+
+
+
+    </script>
+    <script src="https://apis.google.com/js/client.js?onload=load"></script>
+  </head>
+  <body>
+
+    <h1>yTunes</h1>
+
+
+    <div id="searchbox">
+      <input id="query" value='' type="text" placeholder="Search by artists or songs"/>
+      <div class="button" onclick="search();">+</div>
+    </div>
+
+    
+    <ul id="results">
+
+
+
+
+
+
+
+    </ul>
+
+    
+      <div id="videoDiv">Loading...</div></td>
+
+      <div id="videoInfo">
+        <div id ="current"><p>Playing: nothing</p></div>
+        <img id ="currentThumb" src="http://rack.1.mshcdn.com/media/ZgkyMDEyLzEyLzA0Lzg1L2hhcHB5NXRoYmlyLmJLYy5qcGcKcAl0aHVtYgk5NTB4NTM0IwplCWpwZw/eb8329a5/d20/happy-5th-birthday-youtube--501ecffedf.jpg" onclick="rotate('currentThumb')"/>
+
+        <p style="text-align:center">Current Time: <span id="videoCurrentTime">--:--</span> | <span id="videoDuration">--:--</span></p>
+
+        <input id="timeBar" type="range" min="0" max="100" value="100" style="margin-left:20px;"/>
+        <p id="volume" style="padding-bottom:0px;padding-top:0px; padding-left:30px;padding-right:30px;"><img src="mute.png" /><input id="volumeSetting" onmouseup="setVideoVolume();" type="range" min="0" max="100" value="100" step="10"/><img src="volume.png" /></p>
+
+
+        <!-- <p>Player state: <span id="playerState">--</span></p> -->
+      
+        <a href="javascript:void(0);" title="play" onclick="playVideo();" class="button"><img src="play.png" /></a> 
+
+      <a href="javascript:void(0);" title="pause" onclick="pauseVideo();" class="button"><img src="pause.png" /></a> 
+
+      <a href="javascript:void(0);" title="export" onclick="exportPlaylist();" class="button"><img src="export.png" /></a> 
+
+      <a href="javascript:void(0);" title="import" onclick="importPlaylist();" class="button"><img src="import.png" /></a> 
+
+      
+
+        
+      </div>
+      
+      
+      
+      
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
+
+    <script src="js/main.js"></script>
+
+
+
+
+    <footer style="text-align:center;margin:0px;"><p>All the songs you want, powered by<img src="http://www.youtube.com/yt/img/logo.png" /></p></footer>
+
+  </body>
+</html>
