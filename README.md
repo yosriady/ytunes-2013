@@ -4,7 +4,7 @@ yTunes
 
 
 
-![yTunes](https://github.com/Leventhan/yTunes/blob/master/screenshot.png)
+![yTunes](screenshot.png)
 
 
 
