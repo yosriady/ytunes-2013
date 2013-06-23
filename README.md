@@ -1,6 +1,6 @@
 yTunes
 ======
-###All the songs you want, powered by the ![Youtube](tylogo.png) API
+###All the songs you want, powered by the ![Youtube](ytlogo.png) API
 
 
 
