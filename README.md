@@ -18,13 +18,13 @@ You can listen to, curate, and share your favourite music instantly without hass
 
 
 Post-hackathon thoughts/things learned:
-- A hackathons is a poor environment to learn new technologies i.e. Backbone for the first time
+- A hackathon is a poor environment to learn new technologies i.e. Backbone for the first time
 - if you're using an API that is still experimental/under development, you're gonna have a bad time
 - Hackathons are great to practice using semi-familiar technologies to build a real product/demo
-- You're not building a web service, you're not building a prototype of a web service, you're building a *demo* of a web service
-- The demo is a critical component: Rehearse, rehearse, rehearse
+- You're not building a web service, you're building a *demo* of a web service
+- The demo/presentation is a critical component: Rehearse, rehearse, rehearse!
 - You need to define the problem more clearly and actually walk through the app, assume the audience knows nothing about it
-- Boil down your 24 hours to five minutes of awesome without pause
-- Overall, I had a blast building yTunes and seeing the other teams' projects/hacks 
-
+- Boil down your 24 hours to five minutes of awesome (i.e. I need to do more presentations)
+- Overall, I had a blast building yTunes and seeing the other cool projects/hacks
+- Looking forward to next year's hackathon! Hope I can win something next time :)
 
